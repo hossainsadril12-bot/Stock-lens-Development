@@ -1,0 +1,78 @@
+.grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+.card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  text-align: left;
+  padding: 16px 18px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface-2);
+  transition: border-color 0.15s, background 0.15s;
+}
+.card:hover:not(:disabled) {
+  border-color: var(--border-strong);
+  background: var(--surface-3);
+}
+.card[data-selected="true"] {
+  border-color: var(--accent);
+}
+.card:disabled {
+  cursor: default;
+}
+.card:disabled:not([data-selected="true"]) {
+  opacity: 0.55;
+}
+
+.cardIcon {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  flex: none;
+  border-radius: 10px;
+  background: var(--surface-3);
+  color: var(--ink);
+}
+.card[data-selected="true"] .cardIcon {
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+.cardBody {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex: 1;
+  min-width: 0;
+}
+.cardLabel {
+  font-size: var(--t-md);
+  font-weight: 600;
+}
+.cardDesc {
+  font-size: var(--t-xs);
+  color: var(--ink-3);
+  line-height: 1.4;
+}
+.cardGo {
+  color: var(--ink-3);
+  flex: none;
+}
+.card:hover:not(:disabled) .cardGo {
+  color: var(--ink);
+}
+
+.spin {
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

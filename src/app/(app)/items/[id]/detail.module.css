@@ -1,0 +1,20 @@
+.dim {
+  color: var(--ink-3);
+}
+.kvRow {
+  display: contents;
+}
+.moveRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+.moveForm {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.moveForm .input,
+.moveForm input {
+  width: 120px;
+}
