@@ -1,37 +1,19 @@
+import { redirect } from "next/navigation";
 import { getSuppliers } from "@/lib/queries";
-import { num } from "@/lib/format";
+import { getUser } from "@/lib/auth";
+import { can, canSeeNav } from "@/lib/permissions";
+import SupplierAdmin from "./SupplierAdmin";
 import s from "@/components/shared.module.css";
 
 export default async function SuppliersPage() {
+  const user = await getUser();
+  if (!user) redirect("/login");
+  if (!canSeeNav(user.role, "suppliers")) redirect("/items");
   const suppliers = await getSuppliers();
+  const canManage = can(user.role, "supplier.manage");
   return (
     <div className={s.page}>
-      <div className={s.head}>
-        <div>
-          <h1 className={s.h1}>Suppliers</h1>
-          <p className={s.sub}>Contacts and lead times that feed the reorder forecast</p>
-        </div>
-      </div>
-      <div className={s.tableWrap}>
-        <table className={s.table}>
-          <thead>
-            <tr>
-              <th>Supplier</th>
-              <th data-num="true">Lead time (days)</th>
-              <th data-num="true">Open POs</th>
-            </tr>
-          </thead>
-          <tbody>
-            {suppliers.map((sup) => (
-              <tr key={sup.id}>
-                <td className={s.name}>{sup.name}</td>
-                <td data-num="true" className="tnum">{num(sup.leadTimeDays)}</td>
-                <td data-num="true" className="tnum">{num(sup.openPOs)}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <SupplierAdmin suppliers={suppliers} canManage={canManage} />
     </div>
   );
 }

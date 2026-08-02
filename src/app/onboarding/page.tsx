@@ -21,7 +21,7 @@ export default async function OnboardingPage() {
         <h1 className={styles.h1}>Set up your workspace</h1>
         <p className={styles.lede}>
           StockLens shapes itself to what you track — columns, statuses and metrics all follow your
-          industry. Choose one to begin; you can change it any time.
+          industry. Pick every industry you manage; you can switch between them any time from the top bar.
         </p>
 
         <IndustryPicker />

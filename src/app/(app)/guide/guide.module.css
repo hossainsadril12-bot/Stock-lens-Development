@@ -1,0 +1,110 @@
+.lead {
+  font-size: 15px;
+  color: var(--ink-2);
+  line-height: 1.6;
+  max-width: 68ch;
+}
+.toc {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 4px;
+}
+.tocLink {
+  font-size: 13px;
+  color: var(--ink-2);
+  padding: 5px 11px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface-2);
+}
+.tocLink:hover {
+  background: var(--surface-hover);
+  color: var(--ink);
+}
+.body {
+  color: var(--ink-2);
+  line-height: 1.65;
+  font-size: 14.5px;
+  max-width: 70ch;
+}
+.body p {
+  margin: 0 0 10px;
+}
+.steps {
+  margin: 6px 0 0;
+  padding-left: 0;
+  list-style: none;
+  counter-reset: step;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.steps li {
+  counter-increment: step;
+  position: relative;
+  padding-left: 40px;
+  color: var(--ink-2);
+  line-height: 1.55;
+  font-size: 14.5px;
+}
+.steps li::before {
+  content: counter(step);
+  position: absolute;
+  left: 0;
+  top: -1px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-size: 13px;
+  font-weight: 700;
+  display: grid;
+  place-items: center;
+  font-variant-numeric: tabular-nums;
+}
+.callout {
+  margin-top: 12px;
+  border-left: 3px solid var(--accent);
+  background: var(--surface-1);
+  padding: 12px 14px;
+  border-radius: 0 8px 8px 0;
+  font-size: 13.5px;
+  color: var(--ink-2);
+  line-height: 1.55;
+}
+.callout strong {
+  color: var(--ink);
+}
+.term {
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 0.86em;
+  background: var(--surface-3);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 1px 6px;
+  color: var(--ink);
+  white-space: nowrap;
+}
+.sent {
+  border: 1px solid #10b981;
+  background: #ecfdf5;
+  color: #065f46;
+  padding: 12px 16px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+}
+.fbItem {
+  border-bottom: 1px solid var(--border);
+  padding: 10px 0;
+  font-size: 14px;
+  color: var(--ink-2);
+}
+.fbItem:last-child { border-bottom: none; }
+.fbWho {
+  font-size: 12px;
+  color: var(--ink-3);
+  margin-top: 3px;
+}

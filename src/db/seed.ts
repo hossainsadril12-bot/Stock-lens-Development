@@ -16,6 +16,10 @@ function daysAgo(n: number): string {
 }
 
 const DDL = `
+DROP TABLE IF EXISTS feedback;
+DROP TABLE IF EXISTS notifications;
+DROP TABLE IF EXISTS sale_items;
+DROP TABLE IF EXISTS sales;
 DROP TABLE IF EXISTS transfer_orders;
 DROP TABLE IF EXISTS purchase_orders;
 DROP TABLE IF EXISTS movements;
@@ -52,6 +56,7 @@ CREATE TABLE categories (
 CREATE TABLE suppliers (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   name TEXT NOT NULL,
+  phone TEXT,
   lead_time_days INTEGER NOT NULL DEFAULT 7
 );
 CREATE TABLE drivers (
@@ -69,6 +74,7 @@ CREATE TABLE items (
   type TEXT NOT NULL,
   name TEXT NOT NULL,
   sku TEXT,
+  barcode TEXT,
   category_id INTEGER,
   status TEXT,
   price REAL,
@@ -99,6 +105,7 @@ CREATE TABLE purchase_orders (
   supplier_id INTEGER,
   status TEXT NOT NULL,
   total REAL NOT NULL DEFAULT 0,
+  item_id INTEGER,
   item_summary TEXT,
   qty INTEGER,
   created_by TEXT,
@@ -125,6 +132,37 @@ CREATE TABLE transfer_orders (
   expected_date TEXT,
   received_at TEXT,
   created_by TEXT
+);
+CREATE TABLE notifications (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  message TEXT NOT NULL,
+  kind TEXT,
+  read INTEGER NOT NULL DEFAULT 0,
+  created_at TEXT NOT NULL
+);
+CREATE TABLE sales (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  code TEXT NOT NULL,
+  customer_name TEXT NOT NULL,
+  total REAL NOT NULL DEFAULT 0,
+  created_by TEXT,
+  created_at TEXT NOT NULL
+);
+CREATE TABLE sale_items (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  sale_id INTEGER NOT NULL,
+  item_id INTEGER,
+  item_name TEXT NOT NULL,
+  quantity INTEGER NOT NULL,
+  unit_price REAL,
+  line_total REAL
+);
+CREATE TABLE feedback (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_name TEXT,
+  message TEXT NOT NULL,
+  handled INTEGER NOT NULL DEFAULT 0,
+  created_at TEXT NOT NULL
 );
 `;
 
@@ -164,8 +202,8 @@ for (const [id, name, type] of cats)
   add("INSERT INTO categories (id,name,type) VALUES (?,?,?)", [id, name, type]);
 
 // --- Suppliers ---
-add("INSERT INTO suppliers (id,name,lead_time_days) VALUES (?,?,?)", [1, "PaperCo", 5]);
-add("INSERT INTO suppliers (id,name,lead_time_days) VALUES (?,?,?)", [2, "InkWorld", 7]);
+add("INSERT INTO suppliers (id,name,phone,lead_time_days) VALUES (?,?,?,?)", [1, "PaperCo", "+8801711-201201", 5]);
+add("INSERT INTO suppliers (id,name,phone,lead_time_days) VALUES (?,?,?,?)", [2, "InkWorld", "+8801822-405406", 7]);
 
 // --- Drivers & vehicles (own transport fleet for transfers) ---
 add("INSERT INTO drivers (id,name,phone) VALUES (?,?,?)", [1, "Karim Ali", "+8801711-000111"]);
@@ -179,16 +217,21 @@ add("INSERT INTO vehicles (id,label,assigned_driver_id) VALUES (?,?,?)", [4, "Va
 
 // --- Items ---
 type ItemRow = {
-  id: number; type: string; name: string; sku: string | null; categoryId: number | null;
+  id: number; type: string; name: string; sku: string | null; barcode: string | null; categoryId: number | null;
   status: string | null; price: number | null; reorder: number | null; loc: number | null;
   attrs: Record<string, unknown> | null; created: string;
 };
 const itemRows: ItemRow[] = [];
-const item = (r: Partial<ItemRow> & { id: number; type: string; name: string }) =>
+// Deterministic demo barcode: 13-digit EAN-style, "200" prefix + zero-padded id.
+const demoBarcode = (id: number) => `200${String(id).padStart(10, "0")}`;
+const item = (r: Partial<ItemRow> & { id: number; type: string; name: string }) => {
+  // physical + equipment items carry a scannable barcode; others (real_estate/digital/kit) don't.
+  const barcode = r.barcode ?? (r.type === "physical" || r.type === "equipment" ? demoBarcode(r.id) : null);
   itemRows.push({
     sku: null, categoryId: null, status: null, price: null, reorder: null,
-    loc: null, attrs: null, created: daysAgo(120), ...r,
+    loc: null, attrs: null, created: daysAgo(120), ...r, barcode,
   });
+};
 
 // Physical (1..8)
 item({ id: 1, type: "physical", name: "A4 Premium Paper", sku: "PAP-A4-PRM", categoryId: 1, price: 5.5, reorder: 200, loc: 1, attrs: { unit_of_measure: "ream", tracking_mode: "batch" } });
@@ -238,8 +281,8 @@ item({ id: 42, type: "kit", name: "Furnished Flat Bundle", sku: "KIT-FLAT", cate
 
 for (const r of itemRows)
   add(
-    "INSERT INTO items (id,type,name,sku,category_id,status,price,reorder_point,primary_location_id,attrs,created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)",
-    [r.id, r.type, r.name, r.sku, r.categoryId, r.status, r.price, r.reorder, r.loc, r.attrs ? JSON.stringify(r.attrs) : null, r.created]
+    "INSERT INTO items (id,type,name,sku,barcode,category_id,status,price,reorder_point,primary_location_id,attrs,created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
+    [r.id, r.type, r.name, r.sku, r.barcode, r.categoryId, r.status, r.price, r.reorder, r.loc, r.attrs ? JSON.stringify(r.attrs) : null, r.created]
   );
 
 // --- Stock (physical + equipment) ---
@@ -276,12 +319,12 @@ for (const [itemId, locId, type, qty, note, created] of moves)
   add("INSERT INTO movements (item_id,location_id,type,quantity,note,created_at) VALUES (?,?,?,?,?,?)", [itemId, locId, type, qty, note, created]);
 
 // --- Purchase orders ---
-add("INSERT INTO purchase_orders (code,supplier_id,status,total,item_summary,qty,created_by,created_at,expected_date) VALUES (?,?,?,?,?,?,?,?,?)",
-  ["PO-1042", 1, "pending_approval", 2750, "A4 Premium Paper", 500, "Rahim", daysAgo(3), "2026-08-04"]);
-add("INSERT INTO purchase_orders (code,supplier_id,status,total,item_summary,qty,created_by,created_at,expected_date) VALUES (?,?,?,?,?,?,?,?,?)",
-  ["PO-1041", 2, "sent", 4200, "Black Ink Cartridge", 100, "Anwar", daysAgo(5), "2026-08-01"]);
-add("INSERT INTO purchase_orders (code,supplier_id,status,total,item_summary,qty,created_by,created_at,expected_date) VALUES (?,?,?,?,?,?,?,?,?)",
-  ["PO-1039", 1, "received", 1600, "A4 Standard Paper", 500, "Anwar", daysAgo(12), "2026-07-24"]);
+add("INSERT INTO purchase_orders (code,supplier_id,status,total,item_id,item_summary,qty,created_by,created_at,expected_date) VALUES (?,?,?,?,?,?,?,?,?,?)",
+  ["PO-1042", 1, "pending_approval", 2750, 1, "A4 Premium Paper", 500, "Rahim", daysAgo(3), "2026-08-04"]);
+add("INSERT INTO purchase_orders (code,supplier_id,status,total,item_id,item_summary,qty,created_by,created_at,expected_date) VALUES (?,?,?,?,?,?,?,?,?,?)",
+  ["PO-1041", 2, "sent", 4200, 4, "Black Ink Cartridge", 100, "Anwar", daysAgo(5), "2026-08-01"]);
+add("INSERT INTO purchase_orders (code,supplier_id,status,total,item_id,item_summary,qty,created_by,created_at,expected_date) VALUES (?,?,?,?,?,?,?,?,?,?)",
+  ["PO-1039", 1, "received", 1600, 2, "A4 Standard Paper", 500, "Anwar", daysAgo(12), "2026-07-24"]);
 
 // --- Transfers (hub -> sub-warehouse, own transport, no supplier) ---
 const transfers: (string | number | null)[][] = [

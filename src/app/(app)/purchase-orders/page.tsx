@@ -3,7 +3,7 @@ import { Plus } from "lucide-react";
 import { getUser } from "@/lib/auth";
 import { can } from "@/lib/permissions";
 import { getPurchaseOrders, PO_STATUS } from "@/lib/queries";
-import { approvePO } from "@/app/data-actions";
+import { approvePO, receivePO } from "@/app/data-actions";
 import Pill from "@/components/Pill";
 import { money, date } from "@/lib/format";
 import s from "@/components/shared.module.css";
@@ -12,6 +12,7 @@ export default async function PurchaseOrdersPage() {
   const user = await getUser();
   const pos = await getPurchaseOrders();
   const canApprove = user ? can(user.role, "po.approve") : false;
+  const canReceive = user ? can(user.role, "po.receive") : false;
   const canCreate = user ? can(user.role, "po.create") : false;
 
   return (
@@ -62,6 +63,11 @@ export default async function PurchaseOrdersPage() {
                       <form action={approvePO}>
                         <input type="hidden" name="id" value={p.id} />
                         <button className={s.btn} type="submit">Approve</button>
+                      </form>
+                    ) : p.status === "sent" && canReceive ? (
+                      <form action={receivePO}>
+                        <input type="hidden" name="id" value={p.id} />
+                        <button className={s.btnPrimary} type="submit">Receive</button>
                       </form>
                     ) : (
                       <span className={s.muted}>—</span>

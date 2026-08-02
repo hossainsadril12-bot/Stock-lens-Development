@@ -1,0 +1,107 @@
+.wrap {
+  position: relative;
+}
+.trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 5px 10px 5px 5px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  background: transparent;
+  cursor: pointer;
+  color: var(--ink);
+}
+.trigger:hover {
+  background: var(--surface-hover);
+}
+.avatar {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--surface-3);
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 600;
+}
+.who {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.15;
+  text-align: left;
+}
+.name {
+  font-size: 13px;
+  font-weight: 600;
+}
+.role {
+  font-size: 11px;
+  color: var(--ink-3);
+}
+.chev {
+  color: var(--ink-3);
+  transition: transform 0.15s;
+}
+.chev[data-open="true"] {
+  transform: rotate(180deg);
+}
+
+/* Dropdown: rounded, with a gap above (offset from the trigger) */
+.menu {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  min-width: 220px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.28);
+  padding: 8px;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.menuHead {
+  display: flex;
+  flex-direction: column;
+  padding: 8px 10px 10px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 6px;
+}
+.menuName {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.menuRole {
+  font-size: 12px;
+  color: var(--ink-3);
+}
+.item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 9px 10px;
+  border: none;
+  background: transparent;
+  border-radius: 9px;
+  font-size: 14px;
+  color: var(--ink);
+  cursor: pointer;
+  text-align: left;
+}
+.item:hover {
+  background: var(--surface-hover);
+}
+.sep {
+  height: 1px;
+  background: var(--border);
+  margin: 6px 4px;
+}
+.danger {
+  color: #dc2626;
+}

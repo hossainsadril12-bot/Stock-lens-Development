@@ -68,6 +68,26 @@
   color: var(--ink);
 }
 
+.continue {
+  margin-top: 20px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 22px;
+  border: 1px solid var(--accent);
+  border-radius: 10px;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-size: var(--t-sm, 14px);
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+.continue:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
 .spin {
   animation: spin 0.8s linear infinite;
 }

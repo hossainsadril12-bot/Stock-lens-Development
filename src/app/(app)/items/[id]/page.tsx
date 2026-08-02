@@ -5,7 +5,7 @@ import { getUser } from "@/lib/auth";
 import { can } from "@/lib/permissions";
 import { getItem, getItemMovements } from "@/lib/queries";
 import { getIndustry } from "@/lib/industries";
-import { deleteItem, stockMove } from "@/app/data-actions";
+import { deleteItem, stockMove, sellItem } from "@/app/data-actions";
 import StatusPill from "@/components/StatusPill";
 import { num, money, date } from "@/lib/format";
 import s from "@/components/shared.module.css";
@@ -164,6 +164,34 @@ export default async function ItemDetailPage({ params }: { params: Promise<{ id:
               <button className={s.btn} type="submit"><Minus size={15} /> Stock out</button>
             </form>
           </div>
+        </div>
+      )}
+
+      {canMove && (
+        <div className={s.panel}>
+          <h3 className={s.panelTitle}>Issue to customer</h3>
+          <p className={s.sub} style={{ marginTop: 0 }}>
+            Give stock to a customer — quantity is deducted from on-hand and a receipt is generated.
+          </p>
+          <form action={sellItem} className={s.form}>
+            <input type="hidden" name="id" value={item.id} />
+            <div className={s.formGrid}>
+              <div className={s.field}>
+                <label className={s.label} htmlFor="customer">Customer name <span className={s.req}>*</span></label>
+                <input className={s.input} id="customer" name="customer" placeholder="e.g. Karim Traders" required />
+              </div>
+              <div className={s.field}>
+                <label className={s.label} htmlFor="sell_qty">Quantity <span className={s.req}>*</span></label>
+                <input className={s.input} id="sell_qty" name="qty" type="number" min="1" max={item.totals.onHand} placeholder="Qty" required />
+              </div>
+            </div>
+            <div className={s.formActions}>
+              <button className={s.btnPrimary} type="submit">Sell & make receipt</button>
+              <span className={s.muted} style={{ alignSelf: "center", fontSize: "0.85rem" }}>
+                {num(item.totals.onHand)} on hand{item.price != null ? ` · ${money(item.price)} each` : ""}
+              </span>
+            </div>
+          </form>
         </div>
       )}
 

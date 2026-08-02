@@ -1,5 +1,6 @@
 import { db } from "@/db/client";
-import { items, categories, stock, locations, purchaseOrders, movements, suppliers, transferOrders, users, drivers, vehicles } from "@/db/schema";
+import { eq, desc } from "drizzle-orm";
+import { items, categories, stock, locations, purchaseOrders, movements, suppliers, transferOrders, users, drivers, vehicles, notifications, sales, saleItems, feedback } from "@/db/schema";
 import { getIndustry, type IndustryKey, type Industry } from "./industries";
 import { num, money, moneyCompact, date, daysBetween, daysUntil } from "./format";
 
@@ -305,6 +306,7 @@ export type ItemDetail = {
   type: IndustryKey;
   name: string;
   sku: string | null;
+  barcode: string | null;
   categoryName: string | null;
   categoryId: number | null;
   statusKey: string;
@@ -339,6 +341,7 @@ export async function getItem(id: number): Promise<ItemDetail | null> {
     type: it.type as IndustryKey,
     name: it.name,
     sku: it.sku,
+    barcode: it.barcode,
     categoryName: catName,
     categoryId: it.categoryId,
     statusKey,
@@ -377,6 +380,7 @@ export async function getPurchaseOrders() {
       supplier: p.supplierId ? sup.get(p.supplierId) ?? "—" : "—",
       status: p.status,
       total: p.total,
+      itemId: p.itemId,
       itemSummary: p.itemSummary,
       qty: p.qty,
       createdBy: p.createdBy,
@@ -399,6 +403,7 @@ export async function getSuppliers() {
   return raw.suppliers.map((s) => ({
     id: s.id,
     name: s.name,
+    phone: s.phone,
     leadTimeDays: s.leadTimeDays,
     openPOs: raw.pos.filter((p) => p.supplierId === s.id && p.status !== "received").length,
   }));
@@ -541,6 +546,55 @@ export async function getCategoriesOverview() {
   }));
 }
 
+// ---- Category detail (scan target) ----
+export type CategoryItemRow = {
+  id: number;
+  name: string;
+  sku: string | null;
+  barcode: string | null;
+  onHand: number | null;
+  statusKey: string;
+};
+export type CategoryDetail = {
+  id: number;
+  name: string;
+  type: IndustryKey;
+  scannable: boolean; // physical/equipment carry stock + barcodes
+  items: CategoryItemRow[];
+};
+
+export async function getCategoryDetail(id: number): Promise<CategoryDetail | null> {
+  const raw = await loadAll();
+  const c = raw.categories.find((x) => x.id === id);
+  if (!c) return null;
+  const type = c.type as IndustryKey;
+  const scannable = type === "physical" || type === "equipment";
+  const items = raw.items
+    .filter((it) => it.categoryId === id)
+    .map((it) => {
+      const rows = raw.stock.filter((s) => s.itemId === it.id && s.locationId === OWN_LOCATION_ID);
+      const onHand = scannable ? rows.reduce((a, s) => a + s.onHand, 0) : null;
+      let statusKey = it.status ?? "";
+      if (type === "physical") statusKey = physicalStatus((onHand ?? 0) - rows.reduce((a, s) => a + s.reserved, 0), it.reorderPoint);
+      return { id: it.id, name: it.name, sku: it.sku, barcode: it.barcode, onHand, statusKey };
+    });
+  return { id: c.id, name: c.name, type, scannable, items };
+}
+
+// Barcode lookup for scan stock-in. Optionally restrict to a category.
+export async function findItemByBarcode(barcode: string, categoryId?: number) {
+  const raw = await loadAll();
+  const code = barcode.trim();
+  const it = raw.items.find(
+    (x) => x.barcode === code && (categoryId == null || x.categoryId === categoryId)
+  );
+  if (!it) return null;
+  const onHand = raw.stock
+    .filter((s) => s.itemId === it.id && s.locationId === OWN_LOCATION_ID)
+    .reduce((a, s) => a + s.onHand, 0);
+  return { id: it.id, name: it.name, barcode: it.barcode, categoryId: it.categoryId, onHand };
+}
+
 // ---- Reports ----
 export type Reports = {
   industry: Industry;
@@ -567,4 +621,55 @@ export async function getReports(key: IndustryKey): Promise<Reports> {
   const outOfStock = rows.filter((r) => r.statusKey === "out_of_stock").map((r) => ({ id: r.id, name: r.name }));
   const stockValue = rows.reduce((a, r) => a + (r.onHand ?? 0) * (r.price ?? 0) + (r.available == null ? (r.price ?? 0) : 0), 0);
   return { industry, statusBreakdown, totalItems: rows.length, lowStock, outOfStock, stockValue };
+}
+
+// ---- Notifications (top-bar bell) ----
+export async function getNotifications() {
+  const rows = await db.select().from(notifications).orderBy(desc(notifications.id)).limit(20);
+  return {
+    items: rows.map((n) => ({ id: n.id, message: n.message, kind: n.kind, read: n.read === 1, createdAt: n.createdAt })),
+    unread: rows.filter((n) => n.read === 0).length,
+  };
+}
+
+// ---- Sale / receipt (header + lines) ----
+export async function getSale(id: number) {
+  const row = (await db.select().from(sales).where(eq(sales.id, id)))[0];
+  if (!row) return null;
+  const lines = await db.select().from(saleItems).where(eq(saleItems.saleId, id));
+  return {
+    id: row.id,
+    code: row.code,
+    customerName: row.customerName,
+    total: row.total ?? 0,
+    createdBy: row.createdBy,
+    createdAt: row.createdAt,
+    company: COMPANY_NAME,
+    lines: lines.map((l) => ({
+      itemName: l.itemName,
+      quantity: l.quantity,
+      unitPrice: l.unitPrice ?? 0,
+      lineTotal: l.lineTotal ?? 0,
+    })),
+  };
+}
+
+// Catalog of sellable items (stock on hand) for the checkout register.
+export async function getSellableItems(key: IndustryKey) {
+  const raw = await loadAll();
+  return raw.items
+    .filter((it) => it.type === key)
+    .map((it) => {
+      const onHand = raw.stock
+        .filter((s) => s.itemId === it.id && s.locationId === OWN_LOCATION_ID)
+        .reduce((a, s) => a + s.onHand, 0);
+      return { id: it.id, name: it.name, barcode: it.barcode, price: it.price ?? 0, onHand };
+    })
+    .filter((r) => r.onHand > 0);
+}
+
+// ---- Feedback (admin views what users reported) ----
+export async function getFeedback() {
+  const rows = await db.select().from(feedback).orderBy(desc(feedback.id)).limit(50);
+  return rows.map((f) => ({ id: f.id, userName: f.userName, message: f.message, createdAt: f.createdAt }));
 }

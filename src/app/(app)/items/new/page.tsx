@@ -9,7 +9,11 @@ import { getIndustry } from "@/lib/industries";
 import ItemForm from "../ItemForm";
 import s from "@/components/shared.module.css";
 
-export default async function NewItemPage() {
+export default async function NewItemPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ category?: string; barcode?: string }>;
+}) {
   const user = await getUser();
   if (!user) redirect("/login");
   if (!can(user.role, "item.create")) redirect("/items");
@@ -17,6 +21,9 @@ export default async function NewItemPage() {
   const key = await getIndustryKey();
   const categories = await getCategoriesForType(key);
   const ind = getIndustry(key);
+  const sp = await searchParams;
+  const prefillCategoryId = sp.category ? Number(sp.category) : undefined;
+  const prefillBarcode = sp.barcode;
 
   return (
     <div className={s.page}>
@@ -27,7 +34,13 @@ export default async function NewItemPage() {
         <h1 className={s.h1}>Add {ind.noun.replace(/s$/, "")}</h1>
         <p className={s.sub}>{ind.label} · required fields adapt to this type</p>
       </div>
-      <ItemForm mode="new" industryKey={key} categories={categories} />
+      <ItemForm
+        mode="new"
+        industryKey={key}
+        categories={categories}
+        prefillCategoryId={prefillCategoryId}
+        prefillBarcode={prefillBarcode}
+      />
     </div>
   );
 }

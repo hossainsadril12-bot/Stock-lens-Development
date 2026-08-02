@@ -3,6 +3,23 @@
   flex-direction: column;
   gap: 20px;
 }
+.toolbarRight {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 4px;
+}
+.tabRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 4px;
+}
+.tabRow .tabs {
+  display: flex;
+  gap: 8px;
+}
 .head {
   display: flex;
   justify-content: space-between;

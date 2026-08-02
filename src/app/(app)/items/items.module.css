@@ -42,6 +42,82 @@
   background: var(--accent-hover);
 }
 
+.headActions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex: none;
+}
+.scanBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  flex: none;
+  padding: 9px 16px;
+  border-radius: 999px;
+  border: 1px solid var(--accent);
+  background: transparent;
+  color: var(--accent);
+  font-size: var(--t-sm);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.scanBtn:hover {
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+
+.checkout {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface-2);
+  padding: 16px;
+  margin-bottom: 20px;
+}
+.checkoutTitle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--t-sm);
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+.checkoutForm {
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+  flex-wrap: wrap;
+}
+.checkoutField {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  font-size: 12px;
+  color: var(--ink-3);
+}
+.checkoutField:nth-child(1) { flex: 1 1 240px; }
+.checkoutField:nth-child(2) { flex: 1 1 180px; }
+.checkoutField:nth-child(3) { flex: 0 1 110px; }
+.checkoutField select,
+.checkoutField input {
+  height: 42px;
+  padding: 0 12px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--surface-1);
+  color: var(--ink);
+  font-size: 14px;
+}
+.checkoutForm .addBtn {
+  height: 42px;
+}
+.checkoutHint {
+  margin-top: 10px;
+  font-size: 13px;
+  color: var(--ink-3);
+}
+
 .toolbar {
   display: flex;
   gap: 10px;

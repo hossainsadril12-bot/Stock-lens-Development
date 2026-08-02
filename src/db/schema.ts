@@ -18,6 +18,7 @@ export const categories = sqliteTable("categories", {
 export const suppliers = sqliteTable("suppliers", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   name: text("name").notNull(),
+  phone: text("phone"),
   leadTimeDays: integer("lead_time_days").notNull().default(7),
 });
 
@@ -40,6 +41,7 @@ export const items = sqliteTable("items", {
   type: text("type").notNull(),
   name: text("name").notNull(),
   sku: text("sku"),
+  barcode: text("barcode"), // scanned code (EAN/UPC/Code128); lookup key for scan stock-in
   categoryId: integer("category_id"),
   status: text("status"), // real_estate/equipment/digital carry an explicit status; physical is derived
   price: real("price"),
@@ -74,6 +76,7 @@ export const purchaseOrders = sqliteTable("purchase_orders", {
   supplierId: integer("supplier_id"),
   status: text("status").notNull(), // draft | pending_approval | approved | sent | received
   total: real("total").notNull().default(0),
+  itemId: integer("item_id"), // linked stock item, so receipt can auto stock-in
   itemSummary: text("item_summary"),
   qty: integer("qty"),
   createdBy: text("created_by"),
@@ -114,6 +117,45 @@ export const transferOrders = sqliteTable("transfer_orders", {
   expectedDate: text("expected_date"),
   receivedAt: text("received_at"),
   createdBy: text("created_by"), // who dispatched it (admin)
+});
+
+// In-app notifications (e.g. staff received a transfer). Shown in the top-bar bell.
+export const notifications = sqliteTable("notifications", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  message: text("message").notNull(),
+  kind: text("kind"), // transfer_received | sale | ...
+  read: integer("read").notNull().default(0), // 0 = unread
+  createdAt: text("created_at").notNull(),
+});
+
+// Customer sale / issue-out — HEADER. One receipt, many line items.
+export const sales = sqliteTable("sales", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  code: text("code").notNull(),
+  customerName: text("customer_name").notNull(),
+  total: real("total").notNull().default(0),
+  createdBy: text("created_by"),
+  createdAt: text("created_at").notNull(),
+});
+
+// User-submitted feedback / problem reports from the in-app guide.
+export const feedback = sqliteTable("feedback", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  userName: text("user_name"),
+  message: text("message").notNull(),
+  handled: integer("handled").notNull().default(0),
+  createdAt: text("created_at").notNull(),
+});
+
+// One product line on a sale. Stock is deducted per line.
+export const saleItems = sqliteTable("sale_items", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  saleId: integer("sale_id").notNull(),
+  itemId: integer("item_id"),
+  itemName: text("item_name").notNull(),
+  quantity: integer("quantity").notNull(),
+  unitPrice: real("unit_price"),
+  lineTotal: real("line_total"),
 });
 
 export type User = typeof users.$inferSelect;

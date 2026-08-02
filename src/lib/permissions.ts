@@ -6,6 +6,7 @@ export type Action =
   | "item.delete"
   | "po.create"
   | "po.approve"
+  | "po.receive"
   | "stock.move"
   | "transfer.create"
   | "transfer.request"
@@ -13,11 +14,12 @@ export type Action =
   | "transfer.receive"
   | "transfer.notify"
   | "team.manage"
+  | "supplier.manage"
   | "export";
 
 const MATRIX: Record<Role, Action[]> = {
-  admin: ["item.create", "item.edit", "item.delete", "po.create", "po.approve", "stock.move", "transfer.create", "transfer.approve", "transfer.notify", "team.manage", "export"],
-  staff: ["item.create", "item.edit", "po.create", "stock.move", "transfer.request", "transfer.receive", "export"],
+  admin: ["item.create", "item.edit", "item.delete", "po.create", "po.approve", "po.receive", "stock.move", "transfer.create", "transfer.approve", "transfer.notify", "team.manage", "supplier.manage", "export"],
+  staff: ["item.create", "item.edit", "po.create", "po.receive", "stock.move", "transfer.request", "transfer.receive", "export"],
   viewer: ["export"],
 };
 
@@ -40,7 +42,7 @@ export type NavKey =
 
 const NAV: Record<Role, NavKey[]> = {
   admin: ["dashboard", "items", "transfers", "purchase_orders", "suppliers", "employees", "transport", "locations", "categories", "reports", "settings"],
-  staff: ["dashboard", "items", "transfers", "purchase_orders", "locations", "reports", "settings"],
+  staff: ["dashboard", "items", "transfers", "purchase_orders", "categories", "locations", "reports", "settings"],
   viewer: ["dashboard", "items", "reports", "settings"],
 };
 

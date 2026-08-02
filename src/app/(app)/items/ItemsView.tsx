@@ -2,9 +2,13 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { Search, Plus, MapPin } from "lucide-react";
+import { Search, Plus, MapPin, ScanLine, Upload, ShoppingCart } from "lucide-react";
 import { getIndustry, type Column } from "@/lib/industries";
 import StatusPill from "@/components/StatusPill";
+import ScanPanel from "@/components/ScanPanel";
+import CsvImport from "@/components/CsvImport";
+import SortHeader from "@/components/SortHeader";
+import { useSortable } from "@/components/useSortable";
 import { num, money, date } from "@/lib/format";
 import type { RowData } from "@/lib/queries";
 import styles from "./items.module.css";
@@ -41,6 +45,9 @@ export default function ItemsView({
   location,
   locationScoped,
   canCreate,
+  canScan,
+  scanCategories,
+  canImport,
 }: {
   industryKey: string;
   rows: RowData[];
@@ -48,11 +55,16 @@ export default function ItemsView({
   location: string;
   locationScoped: boolean;
   canCreate: boolean;
+  canScan: boolean;
+  scanCategories: { id: number; name: string }[];
+  canImport: boolean;
 }) {
   const ind = getIndustry(industryKey);
   const [q, setQ] = useState("");
   const [cat, setCat] = useState("All");
   const [status, setStatus] = useState("all");
+  const [scanOpen, setScanOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
 
   const filtered = useMemo(
     () =>
@@ -67,6 +79,8 @@ export default function ItemsView({
       }),
     [rows, cat, status, q]
   );
+
+  const { sorted, sortKey, dir, toggle } = useSortable(filtered, null, (r, k) => resolve(r, k));
 
   return (
     <div className={styles.page}>
@@ -84,12 +98,47 @@ export default function ItemsView({
             )}
           </p>
         </div>
-        {canCreate && (
-          <Link className={styles.addBtn} href="/items/new">
-            <Plus size={16} /> Add {ind.noun.replace(/s$/, "")}
-          </Link>
-        )}
+        <div className={styles.headActions}>
+          {canImport && (
+            <button
+              type="button"
+              className={styles.scanBtn}
+              onClick={() => setImportOpen((v) => !v)}
+              aria-expanded={importOpen}
+            >
+              <Upload size={16} /> {importOpen ? "Close import" : "Import CSV"}
+            </button>
+          )}
+          {canScan && (
+            <button
+              type="button"
+              className={styles.scanBtn}
+              onClick={() => setScanOpen((v) => !v)}
+              aria-expanded={scanOpen}
+            >
+              <ScanLine size={16} /> {scanOpen ? "Close scan" : "Scan barcode"}
+            </button>
+          )}
+          {canScan && (
+            <Link className={styles.scanBtn} href="/checkout">
+              <ShoppingCart size={16} /> Checkout
+            </Link>
+          )}
+          {canCreate && (
+            <Link className={styles.addBtn} href="/items/new">
+              <Plus size={16} /> Add {ind.noun.replace(/s$/, "")}
+            </Link>
+          )}
+        </div>
       </div>
+
+      {canImport && importOpen && (
+        <div style={{ marginBottom: 20 }}>
+          <CsvImport type={industryKey} />
+        </div>
+      )}
+
+      {canScan && scanOpen && <ScanPanel categories={scanCategories} newItemHref="/items/new" />}
 
       <div className={styles.toolbar}>
         <div className={styles.search}>
@@ -138,14 +187,20 @@ export default function ItemsView({
           <thead>
             <tr>
               {ind.columns.map((col) => (
-                <th key={col.key} data-num={isNumCol(col)}>
-                  {col.label}
-                </th>
+                <SortHeader
+                  key={col.key}
+                  label={col.label}
+                  colKey={col.key}
+                  sortKey={sortKey}
+                  dir={dir}
+                  onSort={toggle}
+                  numeric={isNumCol(col)}
+                />
               ))}
             </tr>
           </thead>
           <tbody>
-            {filtered.map((r) => (
+            {sorted.map((r) => (
               <tr key={r.id}>
                 {ind.columns.map((col) => {
                   if (col.kind === "status")

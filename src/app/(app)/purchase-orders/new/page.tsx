@@ -3,7 +3,7 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { getUser } from "@/lib/auth";
 import { can } from "@/lib/permissions";
-import { getSuppliers } from "@/lib/queries";
+import { getSuppliers, getItemsPage } from "@/lib/queries";
 import { createPO } from "@/app/data-actions";
 import s from "@/components/shared.module.css";
 
@@ -12,6 +12,7 @@ export default async function NewPOPage() {
   if (!user) redirect("/login");
   if (!can(user.role, "po.create")) redirect("/purchase-orders");
   const suppliers = await getSuppliers();
+  const itemRows = (await getItemsPage("physical")).rows;
 
   return (
     <div className={s.page}>
@@ -25,8 +26,13 @@ export default async function NewPOPage() {
 
       <form action={createPO} className={s.form}>
         <div className={s.field}>
-          <label className={s.label} htmlFor="item_summary">Item <span className={s.req}>*</span></label>
-          <input className={s.input} id="item_summary" name="item_summary" placeholder="A4 Premium Paper" required />
+          <label className={s.label} htmlFor="item_id">Item <span className={s.req}>*</span></label>
+          <select className={s.select} id="item_id" name="item_id" defaultValue="" required>
+            <option value="" disabled>— select an item —</option>
+            {itemRows.map((it) => (
+              <option key={it.id} value={it.id}>{it.name}</option>
+            ))}
+          </select>
         </div>
         <div className={s.formGrid}>
           <div className={s.field}>

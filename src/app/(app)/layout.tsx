@@ -1,7 +1,8 @@
 import { redirect } from "next/navigation";
 import { getUser, ROLE_LABEL } from "@/lib/auth";
-import { hasIndustry, getIndustryKey } from "@/lib/session";
-import { getAlertCount, COMPANY_NAME } from "@/lib/queries";
+import { hasIndustry, getIndustryKey, getAllowedIndustries } from "@/lib/session";
+import { COMPANY_NAME, getNotifications } from "@/lib/queries";
+import { can } from "@/lib/permissions";
 import AppShell from "@/components/AppShell";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
@@ -10,13 +11,17 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   if (!(await hasIndustry())) redirect("/onboarding");
 
   const key = await getIndustryKey();
-  const alertCount = await getAlertCount(key);
+  const industries = await getAllowedIndustries();
+  const notes = await getNotifications();
 
   return (
     <AppShell
       industryKey={key}
+      industries={industries}
       company={COMPANY_NAME}
-      alertCount={alertCount}
+      notifications={notes.items}
+      unread={notes.unread}
+      canManage={can(user.role, "team.manage")}
       userName={user.name}
       userRole={ROLE_LABEL[user.role]}
       roleKey={user.role}

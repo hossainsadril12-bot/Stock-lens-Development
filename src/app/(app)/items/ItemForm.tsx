@@ -13,11 +13,15 @@ export default function ItemForm({
   industryKey,
   categories,
   item,
+  prefillCategoryId,
+  prefillBarcode,
 }: {
   mode: "new" | "edit";
   industryKey: string;
   categories: Cat[];
   item?: ItemDetail;
+  prefillCategoryId?: number;
+  prefillBarcode?: string;
 }) {
   const ind = getIndustry(industryKey);
   const a = item?.attrs ?? {};
@@ -26,12 +30,19 @@ export default function ItemForm({
   const Category = (
     <div className={s.field}>
       <label className={s.label} htmlFor="category_id">Category</label>
-      <select className={s.select} id="category_id" name="category_id" defaultValue={item?.categoryId ?? ""}>
+      <select className={s.select} id="category_id" name="category_id" defaultValue={item?.categoryId ?? prefillCategoryId ?? ""}>
         <option value="">— none —</option>
         {categories.map((c) => (
           <option key={c.id} value={c.id}>{c.name}</option>
         ))}
       </select>
+    </div>
+  );
+
+  const Barcode = (
+    <div className={s.field}>
+      <label className={s.label} htmlFor="barcode">Barcode</label>
+      <input className={s.input} id="barcode" name="barcode" defaultValue={item?.barcode ?? prefillBarcode ?? ""} placeholder="Scan or type" />
     </div>
   );
 
@@ -66,6 +77,10 @@ export default function ItemForm({
               <input className={s.input} id="sku" name="sku" defaultValue={item?.sku ?? ""} placeholder="PAP-A4-PRM" />
             </div>
             {Category}
+          </div>
+          <div className={s.formGrid}>
+            {Barcode}
+            <div className={s.field} />
           </div>
           <div className={s.formGrid}>
             <div className={s.field}>
@@ -143,6 +158,10 @@ export default function ItemForm({
               <input className={s.input} id="sku" name="sku" defaultValue={item?.sku ?? ""} placeholder="EQ-FL-01" />
             </div>
             {Category}
+          </div>
+          <div className={s.formGrid}>
+            {Barcode}
+            <div className={s.field} />
           </div>
           <div className={s.formGrid}>
             <div className={s.field}>

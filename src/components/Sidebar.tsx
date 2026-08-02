@@ -14,6 +14,7 @@ import {
   PanelLeft,
   Users,
   Car,
+  Tags,
   type LucideIcon,
 } from "lucide-react";
 import { getIndustry } from "@/lib/industries";
@@ -45,6 +46,7 @@ const GROUPS: NavGroup[] = [
   {
     title: "Catalogue",
     items: [
+      { label: "Categories", href: "/categories", icon: Tags, key: "categories" },
       { label: "Locations", href: "/locations", icon: MapPin, key: "locations" },
     ],
   },

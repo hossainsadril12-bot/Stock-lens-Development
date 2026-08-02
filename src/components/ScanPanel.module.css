@@ -1,0 +1,118 @@
+.wrap {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  background: var(--surface-2);
+  margin-bottom: 20px;
+}
+.topLabel {
+  display: block;
+  margin-bottom: 6px;
+}
+.controls {
+  display: flex;
+  gap: 10px;
+  align-items: flex-end; /* buttons line up with the bottom of the fields */
+  flex-wrap: wrap;
+}
+.catField {
+  flex: 0 1 200px;
+  min-width: 160px;
+}
+.scanField {
+  flex: 1 1 260px;
+  min-width: 0;
+}
+.catSelect {
+  width: 100%;
+  height: 48px;
+  padding: 0 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface-2);
+  color: inherit;
+  font-size: var(--t-sm, 14px);
+}
+.scanInput {
+  width: 100%;
+  height: 48px;
+  font-size: 18px;
+  letter-spacing: 0.04em;
+  padding: 0 14px;
+  border: 2px solid var(--accent, #2563eb);
+  border-radius: 10px;
+  font-variant-numeric: tabular-nums;
+}
+.enterBtn,
+.cameraBtn {
+  flex: none;
+  height: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  padding: 0 20px;
+  border-radius: 10px;
+  font-size: var(--t-sm, 14px);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, opacity 0.15s;
+}
+/* Primary: solid accent (theme guarantees accent/accent-ink contrast) */
+.enterBtn {
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+.enterBtn:hover {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+}
+.enterBtn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+/* Secondary: solid surface + strong border + primary ink — visible in both themes */
+.cameraBtn {
+  border: 1px solid var(--border-strong);
+  background: var(--surface-3);
+  color: var(--ink);
+}
+.cameraBtn:hover {
+  background: var(--surface-hover);
+}
+.hint {
+  font-size: 12px;
+  color: var(--ink-3);
+  margin: 8px 2px 0;
+}
+.camera {
+  margin-top: 14px;
+}
+.reader {
+  width: 100%;
+  max-width: 420px;
+  border-radius: 10px;
+  overflow: hidden;
+}
+.feed {
+  margin-top: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 220px;
+  overflow-y: auto;
+}
+.line {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 14px;
+}
+.ok { background: #ecfdf5; color: #065f46; }
+.warn { background: #fffbeb; color: #92400e; }
+.err { background: #fef2f2; color: #991b1b; }
+.line a { color: inherit; font-weight: 600; text-decoration: underline; }
+.count { font-variant-numeric: tabular-nums; opacity: 0.8; }
