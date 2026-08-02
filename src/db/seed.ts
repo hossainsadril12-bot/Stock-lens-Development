@@ -5,7 +5,8 @@ import { createClient, type InArgs } from "@libsql/client";
 // Run with: npm run db:seed
 
 const url = process.env.DATABASE_URL ?? "file:./stocklens.db";
-const client = createClient({ url });
+const authToken = process.env.DATABASE_AUTH_TOKEN;
+const client = createClient({ url, authToken });
 
 // Fixed "today" so demo relative dates ("low for 3 days") stay stable.
 const TODAY = "2026-07-30";
