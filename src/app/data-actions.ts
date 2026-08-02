@@ -304,17 +304,21 @@ export async function createTransfer(fd: FormData) {
   const veh = vehicleId ? (await db.select().from(vehicles).where(eq(vehicles.id, vehicleId)))[0] : null;
   const drv = veh?.assignedDriverId ? (await db.select().from(drivers).where(eq(drivers.id, veh.assignedDriverId)))[0] : null;
 
-  // deduct from the source hub (goes in transit)
+  // deduct from the source hub (goes in transit) — never dispatch more than what's actually there,
+  // or the destination would receive stock that never left the source (phantom stock).
   const src = (await db.select().from(stock).where(and(eq(stock.itemId, itemId), eq(stock.locationId, from))))[0];
-  if (src) await db.update(stock).set({ onHand: Math.max(0, src.onHand - qty) }).where(eq(stock.id, src.id));
+  const dispatchQty = Math.min(qty, src?.onHand ?? 0);
+  if (dispatchQty <= 0) redirect(requestId ? "/transfers?tab=requests" : "/transfers/new");
+  if (src) await db.update(stock).set({ onHand: src.onHand - dispatchQty }).where(eq(stock.id, src.id));
 
   if (requestId) {
     // accepting a staff request — update the same row instead of creating a new one
     const t = (await db.select().from(transferOrders).where(eq(transferOrders.id, requestId)))[0];
     if (!t || t.status !== "requested") redirect("/transfers?tab=requests");
-    await db.insert(movements).values({ itemId, locationId: from, type: "transfer", quantity: qty, note: `Transfer ${t.code} dispatched`, createdAt: now });
+    await db.insert(movements).values({ itemId, locationId: from, type: "transfer", quantity: dispatchQty, note: `Transfer ${t.code} dispatched`, createdAt: now });
     await db.update(transferOrders).set({
       fromLocationId: from,
+      quantity: dispatchQty,
       status: "in_transit",
       vehicleId: veh?.id ?? null,
       vehicle: veh?.label ?? null,
@@ -328,12 +332,12 @@ export async function createTransfer(fd: FormData) {
     const it = (await db.select().from(items).where(eq(items.id, itemId)))[0];
     const count = (await db.select().from(transferOrders)).length;
     const code = `TR-${2002 + count}`;
-    await db.insert(movements).values({ itemId, locationId: from, type: "transfer", quantity: qty, note: `Transfer ${code} dispatched`, createdAt: now });
+    await db.insert(movements).values({ itemId, locationId: from, type: "transfer", quantity: dispatchQty, note: `Transfer ${code} dispatched`, createdAt: now });
     await db.insert(transferOrders).values({
       code,
       itemId,
       itemName: it?.name ?? "Item",
-      quantity: qty,
+      quantity: dispatchQty,
       fromLocationId: from,
       toLocationId: to,
       status: "in_transit",
